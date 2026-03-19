@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #fafaf9;
+  --color-foreground: #111110;
+  --color-card: #ffffff;
+  --color-card-foreground: #111110;
+  --color-muted: #f4f3f0;
+  --color-muted-foreground: #78716c;
+  --color-border: #e6e4df;
+  --color-input: #e6e4df;
+  --color-primary: #111110;
+  --color-primary-foreground: #fafaf9;
+  --color-secondary: #f4f3f0;
+  --color-secondary-foreground: #111110;
+  --color-accent: #ede9e3;
+  --color-accent-foreground: #111110;
+  --color-ring: #111110;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+      "Hiragino Kaku Gothic ProN", "Noto Sans JP", Meiryo, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@keyframes card-reveal {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
