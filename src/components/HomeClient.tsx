@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react"
 import { Restaurant, GenreGroup } from "@/data/types"
 import { getMatches } from "@/data/filters"
+import { LanguageProvider, useLang } from "@/contexts/LanguageContext"
 import { ModeTabs } from "@/components/ModeTabs"
 import { Filters } from "@/components/Filters"
 import { SlotReel } from "@/components/SlotReel"
@@ -17,7 +18,23 @@ interface HomeClientProps {
   maxPeople: number
 }
 
-export default function HomeClient({ restaurants, maxPeople }: HomeClientProps) {
+function LangToggle() {
+  const { lang, setLang } = useLang()
+  return (
+    <button
+      onClick={() => setLang(lang === 'ko' ? 'ja' : 'ko')}
+      className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-[var(--color-border)] text-xs text-[var(--color-muted-foreground)] hover:border-[var(--color-foreground)] hover:text-[var(--color-foreground)] transition-colors cursor-pointer select-none"
+    >
+      <span className={lang === 'ko' ? 'text-[var(--color-foreground)] font-semibold' : ''}>KO</span>
+      <span className="opacity-30">/</span>
+      <span className={lang === 'ja' ? 'text-[var(--color-foreground)] font-semibold' : ''}>JA</span>
+    </button>
+  )
+}
+
+function HomeInner({ restaurants, maxPeople }: HomeClientProps) {
+  const { lang, tr } = useLang()
+
   const [mode, setMode] = useState<"search" | "gacha">("search")
   const [selectedGenres, setSelectedGenres] = useState<Set<string>>(new Set())
   const [people, setPeople] = useState(4)
@@ -76,12 +93,17 @@ export default function HomeClient({ restaurants, maxPeople }: HomeClientProps) 
       <div className="max-w-xl mx-auto px-5">
         {/* Header */}
         <div className="pt-10 pb-6 border-b border-[var(--color-border)]">
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-foreground)]">
-            회식 어디갈까?
-          </h1>
-          <p className="text-sm text-[var(--color-muted-foreground)] mt-1">
-            赤坂 · 紀尾井町 エリア
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-[var(--color-foreground)]">
+                {tr.title}
+              </h1>
+              <p className="text-sm text-[var(--color-muted-foreground)] mt-1">
+                {tr.subtitle}
+              </p>
+            </div>
+            <LangToggle />
+          </div>
         </div>
 
         {/* Mode tabs */}
@@ -105,7 +127,7 @@ export default function HomeClient({ restaurants, maxPeople }: HomeClientProps) 
         {/* Content */}
         <div className="mt-5 pb-20">
           {mode === "search" && (
-            <SearchResults matches={matches} people={people} meal={meal} />
+            <SearchResults matches={matches} people={people} meal={meal} lang={lang} />
           )}
 
           {mode === "gacha" && (
@@ -116,25 +138,25 @@ export default function HomeClient({ restaurants, maxPeople }: HomeClientProps) 
                 onClick={spin}
                 disabled={isSpinning}
               >
-                {isSpinning ? "추첨 중..." : "랜덤 추첨"}
+                {isSpinning ? tr.spinning : tr.spinBtn}
               </Button>
 
               {matches.length > 0 && !isSpinning && !isAnimating && gachaResults.length === 0 && (
                 <p className="text-xs text-center text-[var(--color-muted-foreground)]">
-                  조건에 맞는 가게 <span className="font-semibold text-[var(--color-foreground)]">{matches.length}곳</span> 대기 중
+                  {tr.waitingCount(matches.length)}
                 </p>
               )}
 
               {matches.length === 0 && (
                 <p className="text-sm text-center text-[var(--color-muted-foreground)] py-8">
-                  조건에 맞는 가게가 없습니다
+                  {tr.noMatch}
                 </p>
               )}
 
               {isAnimating && (
                 <div>
                   <p className="text-xs text-center text-[var(--color-muted-foreground)] mb-3">
-                    <span className="font-semibold text-[var(--color-foreground)]">{matchCount}곳</span> 중에서 추첨 중...
+                    {tr.drawingFrom(matchCount)}
                   </p>
                   <SlotReel count={Math.min(GACHA_COUNT, matches.length)} onDone={onSlotDone} />
                 </div>
@@ -143,7 +165,7 @@ export default function HomeClient({ restaurants, maxPeople }: HomeClientProps) 
               {gachaResults.length > 0 && (
                 <div className="space-y-3">
                   <p className="text-xs text-center text-[var(--color-muted-foreground)]">
-                    <span className="font-semibold text-[var(--color-foreground)]">{matchCount}곳</span> 중에서 {gachaResults.length}곳 추첨
+                    {tr.drawnResult(matchCount, gachaResults.length)}
                   </p>
                   {gachaResults.map((r) => (
                     <RestaurantCard
@@ -157,7 +179,7 @@ export default function HomeClient({ restaurants, maxPeople }: HomeClientProps) 
                     />
                   ))}
                   <p className="text-xs text-center text-[var(--color-muted-foreground)] pt-2">
-                    마음에 안 들면 다시 돌려보세요
+                    {tr.retryHint}
                   </p>
                 </div>
               )}
@@ -166,5 +188,13 @@ export default function HomeClient({ restaurants, maxPeople }: HomeClientProps) 
         </div>
       </div>
     </div>
+  )
+}
+
+export default function HomeClient(props: HomeClientProps) {
+  return (
+    <LanguageProvider>
+      <HomeInner {...props} />
+    </LanguageProvider>
   )
 }
