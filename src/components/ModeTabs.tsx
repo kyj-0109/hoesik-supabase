@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { useLang } from "@/contexts/LanguageContext"
 
 interface ModeTabsProps {
   value: "search" | "gacha"
@@ -8,6 +9,7 @@ interface ModeTabsProps {
 }
 
 export function ModeTabs({ value, onChange }: ModeTabsProps) {
+  const { tr } = useLang()
   return (
     <div className="flex border-b border-[var(--color-border)]">
       {(["search", "gacha"] as const).map((mode) => (
@@ -21,7 +23,7 @@ export function ModeTabs({ value, onChange }: ModeTabsProps) {
               : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
           )}
         >
-          {mode === "search" ? "검색" : "가챠"}
+          {mode === "search" ? tr.search : tr.gacha}
         </button>
       ))}
     </div>
