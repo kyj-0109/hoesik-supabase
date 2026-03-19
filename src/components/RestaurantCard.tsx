@@ -6,6 +6,7 @@ import { Badge } from "./ui/badge"
 import { Separator } from "./ui/separator"
 import { Restaurant, Plan } from "@/data/types"
 import { getMatchingPlans } from "@/data/filters"
+import { useLang } from "@/contexts/LanguageContext"
 
 interface RestaurantCardProps {
   restaurant: Restaurant
@@ -17,6 +18,7 @@ interface RestaurantCardProps {
 }
 
 function PlanItem({ plan }: { plan: Plan }) {
+  const { tr } = useLang()
   return (
     <div className="py-2.5 border-b border-[var(--color-border)] last:border-0">
       <p className="text-xs text-[var(--color-muted-foreground)] leading-relaxed mb-1.5">{plan.name}</p>
@@ -26,11 +28,14 @@ function PlanItem({ plan }: { plan: Plan }) {
             ¥{plan.price.toLocaleString()}
           </span>
         )}
-        {plan.lunch && <Badge>런치</Badge>}
-        {plan.dinner && <Badge>디너</Badge>}
+        {plan.lunch && <Badge>{tr.planLunch}</Badge>}
+        {plan.dinner && <Badge>{tr.planDinner}</Badge>}
         {(plan.min_people != null || plan.max_people != null) && (
           <span className="text-xs text-[var(--color-muted-foreground)]">
-            {plan.min_people ?? "?"}–{plan.max_people ?? "?"}명
+            {tr.peopleRange(
+              String(plan.min_people ?? "?"),
+              String(plan.max_people ?? "?")
+            )}
           </span>
         )}
         {plan.duration_hours != null && (
@@ -43,6 +48,7 @@ function PlanItem({ plan }: { plan: Plan }) {
 
 export function RestaurantCard({ restaurant: r, people, meal, defaultExpanded = false, showWinHeader = false, total }: RestaurantCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded)
+  const { lang, tr } = useLang()
   const plans = getMatchingPlans(r, people, meal)
 
   const lowestPrice = plans.reduce((min, p) => {
@@ -50,13 +56,24 @@ export function RestaurantCard({ restaurant: r, people, meal, defaultExpanded = 
     return min == null ? p.price : Math.min(min, p.price)
   }, null as number | null)
 
-  const smokingLabel = r.smoking.includes("禁煙") ? "금연" : r.smoking.includes("喫煙可") ? "흡연가능" : "분연"
+  // Smoking label based on DB value (Japanese) → localized
+  const smokingLabel = r.smoking.includes("禁煙") && !r.smoking.includes("喫煙可")
+    ? tr.smokingNo
+    : r.smoking.includes("喫煙可")
+    ? tr.smokingYes
+    : tr.smokingPartial
+
+  // Primary/secondary name by language
+  const primaryName = lang === 'ja' ? (r.name_jp || r.name) : r.name
+  const secondaryName = lang === 'ja'
+    ? (r.name_jp !== r.name ? r.name : null)
+    : (r.name_jp !== r.name ? r.name_jp : null)
 
   return (
     <div style={showWinHeader ? { animation: "card-reveal 0.5s ease-out" } : undefined}>
       {showWinHeader && total != null && (
         <p className="text-xs text-center text-[var(--color-muted-foreground)] mb-3">
-          <span className="font-semibold text-[var(--color-foreground)]">{total}곳</span> 중 당첨
+          <span className="font-semibold text-[var(--color-foreground)]">{tr.wonFrom(total)}</span>
         </p>
       )}
 
@@ -71,15 +88,15 @@ export function RestaurantCard({ restaurant: r, people, meal, defaultExpanded = 
         <div className="px-4 py-3.5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-[var(--color-foreground)] leading-snug">{r.name}</h3>
-              {r.name_jp !== r.name && (
-                <p className="text-xs text-[var(--color-muted-foreground)] mt-0.5">{r.name_jp}</p>
+              <h3 className="font-semibold text-[var(--color-foreground)] leading-snug">{primaryName}</h3>
+              {secondaryName && (
+                <p className="text-xs text-[var(--color-muted-foreground)] mt-0.5">{secondaryName}</p>
               )}
             </div>
             {r.walk_minutes != null && (
               <div className="flex flex-col items-end shrink-0">
                 <span className="text-base font-semibold tabular-nums text-[var(--color-foreground)]">
-                  {r.walk_minutes}<span className="text-xs font-normal text-[var(--color-muted-foreground)]">분</span>
+                  {r.walk_minutes}<span className="text-xs font-normal text-[var(--color-muted-foreground)]">{tr.walkMin}</span>
                 </span>
                 <span className="text-[10px] text-[var(--color-muted-foreground)]">{r.distance_km}km</span>
               </div>
@@ -111,8 +128,8 @@ export function RestaurantCard({ restaurant: r, people, meal, defaultExpanded = 
               <div className="flex flex-wrap gap-1.5">
                 {r.genre.map((g) => <Badge key={g}>{g}</Badge>)}
                 <Badge>{smokingLabel}</Badge>
-                {r.private_room && <Badge>개인실</Badge>}
-                {r.private_rental && <Badge>대관 가능</Badge>}
+                {r.private_room && <Badge>{tr.privateRoom}</Badge>}
+                {r.private_rental && <Badge>{tr.privateRental}</Badge>}
               </div>
 
               {/* Address */}
@@ -122,7 +139,7 @@ export function RestaurantCard({ restaurant: r, people, meal, defaultExpanded = 
               {plans.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-[var(--color-muted-foreground)] mb-1 uppercase tracking-wide">
-                    이용 가능한 플랜 ({plans.length})
+                    {tr.planAvailable(plans.length)}
                   </p>
                   <div>
                     {plans.map((p, i) => <PlanItem key={i} plan={p} />)}
@@ -131,7 +148,7 @@ export function RestaurantCard({ restaurant: r, people, meal, defaultExpanded = 
               )}
 
               {!defaultExpanded && (
-                <p className="text-xs text-center text-[var(--color-muted-foreground)] pt-1">접기</p>
+                <p className="text-xs text-center text-[var(--color-muted-foreground)] pt-1">{tr.collapse}</p>
               )}
             </div>
           </>
