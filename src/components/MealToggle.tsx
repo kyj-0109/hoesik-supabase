@@ -1,19 +1,20 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { useLang } from "@/contexts/LanguageContext"
 
 interface MealToggleProps {
   value: string
   onChange: (v: string) => void
 }
 
-const options = [
-  { value: "any", label: "상관없음" },
-  { value: "lunch", label: "런치" },
-  { value: "dinner", label: "디너" },
-]
-
 export function MealToggle({ value, onChange }: MealToggleProps) {
+  const { tr } = useLang()
+  const options = [
+    { value: "any", label: tr.mealAny },
+    { value: "lunch", label: tr.mealLunch },
+    { value: "dinner", label: tr.mealDinner },
+  ]
   return (
     <div className="flex rounded border border-[var(--color-border)] overflow-hidden">
       {options.map((opt, i) => (
