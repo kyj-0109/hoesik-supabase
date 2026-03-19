@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { Restaurant } from "@/data/types"
+import { Lang } from "@/data/i18n"
+import { t } from "@/data/i18n"
 import { getMatchingPlans } from "@/data/filters"
 import { RestaurantCard } from "./RestaurantCard"
 
@@ -12,6 +14,7 @@ interface SearchResultsProps {
   matches: Restaurant[]
   people: number
   meal: string
+  lang: Lang
 }
 
 function getLowestPrice(r: Restaurant, people: number, meal: string): number | null {
@@ -22,15 +25,16 @@ function getLowestPrice(r: Restaurant, people: number, meal: string): number | n
   }, null as number | null)
 }
 
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "distance", label: "거리순" },
-  { value: "price_asc", label: "가격 낮은순" },
-  { value: "price_desc", label: "가격 높은순" },
-  { value: "name", label: "이름순" },
-]
-
-export function SearchResults({ matches, people, meal }: SearchResultsProps) {
+export function SearchResults({ matches, people, meal, lang }: SearchResultsProps) {
   const [sort, setSort] = useState<SortKey>("distance")
+  const tr = t[lang]
+
+  const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+    { value: "distance", label: tr.sortDistance },
+    { value: "price_asc", label: tr.sortPriceAsc },
+    { value: "price_desc", label: tr.sortPriceDesc },
+    { value: "name", label: tr.sortName },
+  ]
 
   const sorted = useMemo(() => {
     const arr = [...matches]
@@ -46,8 +50,8 @@ export function SearchResults({ matches, people, meal }: SearchResultsProps) {
   if (matches.length === 0) {
     return (
       <div className="py-16 text-center">
-        <p className="text-sm text-[var(--color-muted-foreground)]">조건에 맞는 가게가 없습니다</p>
-        <p className="text-xs text-[var(--color-muted-foreground)] mt-1">장르, 인원수, 거리를 조정해보세요</p>
+        <p className="text-sm text-[var(--color-muted-foreground)]">{tr.noResults}</p>
+        <p className="text-xs text-[var(--color-muted-foreground)] mt-1">{tr.noResultsHint}</p>
       </div>
     )
   }
@@ -57,7 +61,7 @@ export function SearchResults({ matches, people, meal }: SearchResultsProps) {
       {/* Header with count and sort */}
       <div className="flex items-center justify-between py-3 border-b border-[var(--color-border)] mb-4">
         <span className="text-sm text-[var(--color-muted-foreground)]">
-          <span className="font-semibold text-[var(--color-foreground)]">{matches.length}</span>곳
+          <span className="font-semibold text-[var(--color-foreground)]">{tr.shopCount(matches.length)}</span>
         </span>
         <div className="flex gap-1">
           {SORT_OPTIONS.map((opt) => (
