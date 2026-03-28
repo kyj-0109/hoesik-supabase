@@ -30,7 +30,7 @@ export async function getRestaurants(): Promise<Restaurant[]> {
     .order('id')
 
   if (error) {
-    console.error('Supabase fetch error:', error)
+    console.error('Supabase fetch error:', error.message)
     throw error
   }
 
